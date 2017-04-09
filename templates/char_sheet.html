@@ -1,0 +1,203 @@
+
+{% extends "layout.html" %}
+
+{% block container %}
+<br>
+<div class="form-group">
+  <label for="char_list">Select char:</label>
+  <select id="char_list" class="form-control" onchange="select_char()"></select>
+</div>
+
+<div class="form-group">
+  <label for="boss_list">Select boss:</label>
+  <select id="boss_list" class="form-control"></select>
+</div>
+<br>
+
+
+
+<a href="#bossfight" class="btn  btn-group-justified btn-info" data-toggle="collapse">Bossfight</a>
+<div id="bossfight" class="panel panel-default collapse in">
+    <br>
+    <div class="btn btn-group-justified">
+            <a type="button" onclick="attack(0)" class="btn btn-primary">Attack</a>
+            <a type="button" onclick="attack(1)" class="btn btn-primary">Ambush</a>
+            <a type="button" onclick="defend()" class="btn btn-primary">Defend</a>
+    </div>
+    <br>
+        <div class="m-10">
+            <label>Boss stats: </label>
+            <div>
+                <input id="modifier_speed" type="number" class="col-xs-4" placeholder="Speed">
+                <input id="modifier_accuracy" type="number" class="col-xs-4" placeholder="Accuracy">
+                <input id="modifier_strength" type="number" class="col-xs-4" placeholder="Strength">
+            </div>
+        </div>
+    <br>
+    <div class="panel panel-default m-10">
+        <div id="bossfight_output" class="panel-body">Here comes the output.</div>
+    </div>
+</div>
+<br>
+
+<form id="char_sheet" method="POST" action="char_sheet.html" class="m-10">
+    <a href="#char_stats" class="btn  btn-group-justified btn-info" data-toggle="collapse">Stats</a>
+    <div id="char_stats" class="panel panel-default collapse">
+
+        <div class="input-group">
+            <span class="input-group-addon">Name: </span>
+            <input type="text" id="name" name="name" class="form-control" placeholder="Name of char" aria-describedby="basic-addon1">
+        </div>
+        <br>
+
+        {% for entry in char_columns %}
+        {% if "stat" in entry %}
+        <div class="input-group">
+          <span class="input-group-addon">{{ entry.split("_")[1].title() }}: </span>
+          <input type="number" id="{{ entry }}" name="{{ entry }}" class="form-control" placeholder="{{ entry.split("_")[1].title() }} of char" aria-describedby="basic-addon1">
+        </div>
+        <br>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <a href="#char_defense" class="btn  btn-group-justified btn-info" data-toggle="collapse">Defense</a>
+    <div id="char_defense" class="panel panel-default collapse">
+
+        {% for entry in char_columns %}
+        {% if "defense" in entry %}
+        <div class="input-group">
+          <span class="input-group-addon">{{ entry.split("_")[1].title() }}: </span>
+          <input type="number" id="{{ entry }}" name="{{ entry }}" class="form-control" placeholder="{{ entry.split("_")[1].title() }} of char" aria-describedby="basic-addon1">
+        </div>
+        <br>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+        <a href="#char_weapon" class="btn  btn-group-justified btn-info" data-toggle="collapse">Weapons</a>
+    <div id="char_weapon" class="panel panel-default collapse">
+
+        {% for entry in char_columns %}
+        {% if "weapon" in entry %}
+        <div class="input-group">
+          <span class="input-group-addon">{{ entry.split("_")[1].title() }}: </span>
+          <input type="number" id="{{ entry }}" name="{{ entry }}" class="form-control" placeholder="{{ entry.split("_")[1].title() }} of char" aria-describedby="basic-addon1">
+        </div>
+        <br>
+        {% endif %}
+        {% endfor %}
+    </div>
+    <br>
+    <input class="btn btn-primary btn-block" name="submit" type="submit" value="Save">
+    <input class="btn btn-primary btn-block" name="submit" type="submit" value="Delete">
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+
+    // set variables
+    var char_list = {{char_list|safe}};
+    var boss_list = {{boss_list|safe}};
+    var select = document.getElementById("char_list");
+    var boss_select = document.getElementById("boss_list");
+
+    // on load set values for char
+    for(index = 0; index < char_list.char.length; ++index)
+    {
+        var opt = document.createElement("option");
+        opt.innerHTML = char_list.char[index].name;
+
+        // append it to the select element
+        select.appendChild(opt);
+    }
+
+    // on load set values for boss
+    for(index = 0; index < boss_list.boss.length; ++index)
+    {
+        var opt = document.createElement("option");
+        opt.innerHTML = boss_list.boss[index].name;
+
+        // append it to the boss select element
+        boss_select.appendChild(opt);
+    }
+
+    // load char
+    if ("{{load_char|safe}}" != "none"){select.value = "{{load_char|safe}}"}
+    select_char()
+
+    function select_char(){
+
+            // get current selection
+            var selected = char_list.char.filter(function(data){ return data.name == document.getElementById('char_list').value });
+
+            //update input
+            {% for entry in char_columns %}
+            {% if entry != "id" %}
+              document.getElementById("{{ entry }}").value = selected[0].{{ entry }}
+            {% endif %}
+            {% endfor %}
+
+            //update selection
+            select.value = selected[0].name
+    };
+
+    function attack(modifier){
+
+        // get current selection
+        var selected_char = char_list.char.filter(function(data){ return data.name == document.getElementById('char_list').value })[0];
+        var selected_boss = boss_list.boss.filter(function(data){ return data.name == document.getElementById('boss_list').value })[0];
+
+        // check fight
+        attack_count = selected_char.stat_speed + selected_char.weapon_speed
+        attack_miss = selected_boss.evasion + selected_char.weapon_accuracy + selected_char.stat_accuracy + modifier
+        attack_hit = selected_boss.toughness - selected_char.stat_strength - selected_char.weapon_strength
+        attack_crit = 10 - selected_char.luck
+
+        // set output
+        output = "You hit " + attack_count + "x.<br>\
+                    You need to roll " + attack_miss + " - 10 to hit.<br>\
+                    You need to roll " + attack_hit + " - 10 to deal damage.<br>\
+                    You need to roll " + attack_crit + " - 10 to crit if possible."
+        document.getElementById("bossfight_output").innerHTML = output
+    }
+
+    function defend(){
+
+        // get current selection
+        var selected_char = char_list.char.filter(function(data){ return data.name == document.getElementById('char_list').value })[0];
+        var selected_boss = boss_list.boss.filter(function(data){ return data.name == document.getElementById('boss_list').value })[0];
+        var modifier_boss_speed = document.getElementById('modifier_speed').value
+        var modifier_boss_accuracy = document.getElementById('modifier_accuracy').value
+        var modifier_boss_strength = document.getElementById('modifier_strength').value
+
+        // check if modifier and calculate speed
+        if (modifier_boss_speed != ""){
+            attack_count = parseInt(modifier_boss_speed)
+        } else {
+            attack_count = selected_boss.speed
+        }
+        // check if modifier and calculate accuracy
+        if (modifier_boss_accuracy != ""){
+            attack_hit = parseInt(modifier_boss_accuracy) + selected_char.stat_evasion
+        } else {
+            attack_hit = selected_boss.accuracy + selected_char.stat_evasion
+        }
+        // check if modifier and calculate strength
+        if (modifier_boss_strength != ""){
+            attack_damage = parseInt(modifier_boss_strength)
+        } else {
+            attack_damage = selected_boss.strength
+        }
+
+
+        // set output
+        output = "The boss hits you " + attack_count + "x.<br>\
+                    The boss needs to roll 0 - " + attack_hit + " to miss you.<br>\
+                    The boss will do " + attack_damage + " dmg to you."
+        document.getElementById("bossfight_output").innerHTML = output
+    }
+</script>
+{{ super() }}
+{% endblock %}

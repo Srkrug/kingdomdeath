@@ -1,0 +1,71 @@
+{% extends "layout.html" %}
+
+{% block container %}
+<br>
+<div class="form-group">
+  <label for="boss_list">Select boss:</label>
+  <select id="boss_list" class="form-control" onchange="select_boss()"></select>
+</div>
+
+<form method="POST" action="boss_editor.html">
+
+  <div class="input-group">
+    <span class="input-group-addon">Name: </span>
+    <input type="text" id="name" name="name" class="form-control" placeholder="Name of boss" aria-describedby="basic-addon1">
+  </div>
+  <br>
+
+  {% for entry in boss_columns %}
+  {% if entry != "id" and entry != "name" %}
+  <div class="input-group">
+    <span class="input-group-addon">{{ entry.title() }}: </span>
+  <input type="number" id="{{ entry }}" name="{{ entry }}" class="form-control" placeholder="{{ entry.title() }} of boss" aria-describedby="basic-addon1">
+  </div>
+  <br>
+  {% endif %}
+  {% endfor %}
+    <input class="btn btn-primary btn-block" name="submit" type="submit" value="Save">
+    <input class="btn btn-primary btn-block" name="submit" type="submit" value="Delete">
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+
+    // set variables
+    var boss_list = {{boss_list|safe}};
+    var select = document.getElementById("boss_list");
+
+    // onload set values
+    for(index = 0; index < boss_list.boss.length; ++index)
+    {
+        var opt = document.createElement("option");
+        opt.innerHTML = boss_list.boss[index].name;
+
+        // append it to the select element
+        select.appendChild(opt);
+    }
+
+    // load boss
+    if ("{{load_boss|safe}}" != "none"){select.value = "{{load_boss|safe}}"}
+    select_boss()
+
+    function select_boss(){
+
+            // get current selection
+            var selected = boss_list.boss.filter(function(data){ return data.name == document.getElementById('boss_list').value });
+
+            //update input
+            {% for entry in boss_columns %}
+            {% if entry != "id" %}
+              document.getElementById("{{ entry }}").value = selected[0].{{ entry }}
+            {% endif %}
+            {% endfor %}
+
+            //update selection
+            select.value = selected[0].name
+
+    };
+</script>
+{{super()}}
+{% endblock %}

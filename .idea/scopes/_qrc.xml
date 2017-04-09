@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name=".qrc" pattern="file:*.qrc" />
+</component>
