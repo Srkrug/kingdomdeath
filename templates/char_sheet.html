@@ -153,7 +153,7 @@
         attack_count = selected_char.stat_speed + selected_char.weapon_speed
         attack_miss = selected_boss.evasion + selected_char.weapon_accuracy + selected_char.stat_accuracy + modifier
         attack_hit = selected_boss.toughness - selected_char.stat_strength - selected_char.weapon_strength
-        attack_crit = 10 - selected_char.luck
+        attack_crit = 10 - selected_char.stat_luck
 
         // set output
         output = "You hit " + attack_count + "x.<br>\

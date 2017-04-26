@@ -1,16 +1,16 @@
 # imports
-from flask import Flask, request, flash
+from flask import Flask, request, flash, redirect, session
 from flask import render_template
 from flask_bootstrap import Bootstrap
-from collections import OrderedDict
+from werkzeug.contrib.fixers import ProxyFix
 from sqlobject import *
-import os
+import uuid
 
 
 class BossDatabase(SQLObject):
     """connect to mysql database"""
 
-    _connection = connectionForURI("mysql://root:cisco@localhost/kingdomdeath")
+    _connection = connectionForURI("mysql://root:Avodaq1234*@localhost/kingdomdeath")
     name = StringCol(length=255, unique=True)
     strength = IntCol()
     speed = IntCol()
@@ -19,10 +19,19 @@ class BossDatabase(SQLObject):
     evasion = IntCol()
 
 
+class UserDatabase(SQLObject):
+    """connect to mysql database"""
+
+    _connection = connectionForURI("mysql://root:Avodaq1234*@localhost/kingdomdeath")
+    name = StringCol(length=255, unique=True)
+    password = StringCol(length=255)
+    secret_key = StringCol()
+
+
 class CharDatabase(SQLObject):
     """connect to mysql database"""
 
-    _connection = connectionForURI("mysql://root:cisco@localhost/kingdomdeath")
+    _connection = connectionForURI("mysql://root:Avodaq1234*@localhost/kingdomdeath")
     name = StringCol(length=255, unique=True)
 
     stat_survival = IntCol()
@@ -47,26 +56,69 @@ class CharDatabase(SQLObject):
 # setup flask app
 app = Flask(__name__)
 Bootstrap(app)
-app.secret_key = os.urandom(24)
+app.wsgi_app = ProxyFix(app.wsgi_app)
 
 # create tables if necessary
 BossDatabase.createTable(ifNotExists=True)
 CharDatabase.createTable(ifNotExists=True)
+UserDatabase.createTable(ifNotExists=True)
+
+# create default entry if necessary
+try:
+    app.secret_key = UserDatabase.selectBy(name="default")[0].secret_key
+except:
+    UserDatabase(name="default", password="default", secret_key=str(uuid.uuid4()))
+    app.secret_key = UserDatabase.selectBy(name="default")[0].secret_key
+
 
 # create lists of columns
 boss_columns = sorted(BossDatabase.sqlmeta.columns.keys())
 char_columns = sorted(CharDatabase.sqlmeta.columns.keys())
 
+
 @app.route("/", methods=['GET', 'POST'])
 def default():
     """redirect to default"""
 
-    return boss_editor()
+    return redirect("/login.html")
+
+
+@app.route("/login.html", methods=['GET', 'POST'])
+def login():
+    """login mask"""
+
+    # login user
+    if request.method == "POST" and request.form["submit"] == "Login":
+
+        # check if credentials are correct
+        try:
+            if request.form["name"] == "default":
+                raise Exception
+
+            user = UserDatabase.selectBy(name=request.form["name"],password=request.form["password"])[0].name
+            session['user'] = user
+            flash("Login successfull")
+            return redirect("/char_sheet.html")
+        except:
+            flash("Wrong credentials")
+
+
+    # logout user
+    if request.method == "POST" and request.form["submit"] == "Logout":
+        session.pop('user', None)
+        flash("Logout successfull")
+
+    return render_template("/login.html")
 
 
 @app.route("/boss_editor.html", methods=['GET', 'POST'])
 def boss_editor():
     """render boss"""
+
+    # check if logged in
+    if not 'user' in session:
+        flash("Please login")
+        return redirect("login.html")
 
     # save  to database if post
     if request.method == "POST" and request.form["submit"] == "Save":
@@ -115,13 +167,18 @@ def boss_editor():
         load_boss = "none"
 
     return render_template("boss_editor.html", load_boss=load_boss,
-                           boss_list={'boss': [row.sqlmeta.asDict() for row in BossDatabase.select()]},
+                           boss_list={'boss': [eval(str(row.sqlmeta.asDict()).replace("L","")) for row in BossDatabase.select()]},
                            boss_columns=boss_columns)
 
 
 @app.route("/char_sheet.html", methods=['GET', 'POST'])
 def char_sheet():
     """render char_sheet"""
+
+    # check if logged in
+    if not 'user' in session:
+        flash("Please login")
+        return redirect("login.html")
 
     # save  to database if post
     if request.method == "POST" and request.form["submit"] == "Save":
@@ -171,9 +228,10 @@ def char_sheet():
         load_char = "none"
 
     return render_template("char_sheet.html", load_char=load_char,
-                           char_list={'char': [row.sqlmeta.asDict() for row in CharDatabase.select()]},
-                           boss_list={'boss': [row.sqlmeta.asDict() for row in BossDatabase.select()]},
+                           char_list={'char': [eval(str(row.sqlmeta.asDict()).replace("L","")) for row in CharDatabase.select()]},
+                           boss_list={'boss': [eval(str(row.sqlmeta.asDict()).replace("L","")) for row in BossDatabase.select()]},
                            char_columns=char_columns)
 
 
-app.run(host='0.0.0.0')
+if __name__ == '__main__':
+    app.run()

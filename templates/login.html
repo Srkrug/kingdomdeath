@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block container %}
+<br>
+
+<form method="POST" action="/login.html">
+
+  <div class="input-group">
+    <span class="input-group-addon">Name: </span>
+    <input type="text" id="name" name="name" class="form-control" placeholder="Username" aria-describedby="basic-addon1">
+  </div>
+  <br>
+
+  <div class="input-group">
+    <span class="input-group-addon">Password: </span>
+    <input type="password" id="password" name="password" class="form-control" placeholder="Password" aria-describedby="basic-addon1">
+  </div>
+  <br>
+
+  <input class="btn btn-primary btn-block" name="submit" type="submit" value="Login">
+  <input class="btn btn-primary btn-block" name="submit" type="submit" value="Logout">
+</form>
+{% endblock %}
