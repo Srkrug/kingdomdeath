@@ -3,7 +3,7 @@
 {% block container %}
 <br>
 
-<form method="POST" action="/login.html">
+<form method="POST" action="/register.html">
 
   <div class="input-group">
     <span class="input-group-addon">Name: </span>
@@ -17,8 +17,8 @@
   </div>
   <br>
 
-  <input class="btn btn-primary btn-block" name="submit" type="submit" value="Login">
+  {{recaptcha.get_code()|safe}}
+  <br>
+  <input class="btn btn-primary btn-block" name="submit" type="submit" value="Register">
 </form>
-<br>
-<a type = "button" class="btn btn-primary btn-block" name="submit" type="submit" href="./register.html">Register</a>
 {% endblock %}

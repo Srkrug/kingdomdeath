@@ -1,14 +1,16 @@
 # Kingdom Death Companion
 
-The Kingdom Death Companion (KDC) is a website to help with the board game Kingdom Death. It is build with Flask, MySQL, custom Javascript and Bootstrap.
+The Kingdom Death Companion (KDC) is a website to help with the board game Kingdom Death. It is build with Flask, MySQL, custom Javascript, reCaptcha and Bootstrap.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+Here you will get a copy of the project for development and testing purposes.
 
 ### Prerequisites
 
-Browser with Javascript.
+- Browser with Javascript
+- mySQL database
+- reCaptcha account
 
 
 ## Versioning
